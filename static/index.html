@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=1440" />
+<title>FraudGuard AI — Real-time fraud detection</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 3v6c0 5-3.5 9.4-8 11-4.5-1.6-8-6-8-11V5l8-3z"/><path d="M9 12l2 2 4-4"/></svg>
+      </div>
+      <div>
+        <div class="logo-name">Fraud<span>Guard</span> AI</div>
+        <div class="logo-sub">Real-time ML detection</div>
+      </div>
+    </div>
+
+    <nav class="topbar-nav">
+      <a href="#" class="active">Dashboard</a>
+      <a href="#">Transactions</a>
+      <a href="#">Model</a>
+      <a href="#">Alerts</a>
+      <a href="#">Docs</a>
+    </nav>
+
+    <div class="topbar-right">
+      <span class="status-badge" id="status-badge">
+        <span class="pulse-dot" id="status-dot"></span>
+        <span id="status-text">Initializing model…</span>
+      </span>
+      <span class="stack-tag"><b>XGBoost</b> · FastAPI · Python</span>
+      <button class="topbar-btn" title="Search" aria-label="Search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      </button>
+      <button class="topbar-btn" title="Notifications" aria-label="Notifications">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      </button>
+      <div class="avatar" aria-label="Account">NJ</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- page heading -->
+  <div class="page-head">
+    <div>
+      <div class="crumb"><i></i> Detection workspace · Production</div>
+      <h1 class="page-title">Transaction analysis <em>console</em></h1>
+      <p class="page-sub">Score any transaction against the live XGBoost model. Probability, explainability, and risk factors update in real time as inputs change.</p>
+    </div>
+    <div class="page-head-right">
+      <div class="head-meta">
+        <div>Model · <b id="meta-model-type">XGBoost</b></div>
+        <div>Data · <b id="meta-data-source">—</b></div>
+      </div>
+      <a href="https://www.kaggle.com/datasets/amanalisiddiqui/fraud-detection-dataset" target="_blank" rel="noopener" class="btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Kaggle dataset
+      </a>
+      <button class="btn btn-primary" id="btn-simulate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 5v7h7"/></svg>
+        Simulate random
+      </button>
+    </div>
+  </div>
+
+  <!-- metric cards -->
+  <section class="metrics">
+    <div class="card metric">
+      <div class="metric-label"><span class="dot"></span>Accuracy</div>
+      <div class="metric-value" id="met-accuracy">—<span class="unit">%</span></div>
+      <div class="metric-delta" id="delta-accuracy">Loading…</div>
+      <div class="metric-bar"><i id="bar-accuracy" style="width:0%"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="metric-label"><span class="dot" style="background:#10b981"></span>Precision</div>
+      <div class="metric-value" id="met-precision">—<span class="unit">%</span></div>
+      <div class="metric-delta" id="delta-precision">Loading…</div>
+      <div class="metric-bar"><i id="bar-precision" style="width:0%; background: linear-gradient(90deg,#10b981,#34d399); box-shadow: 0 0 12px rgba(16,185,129,.5)"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="metric-label"><span class="dot" style="background:#f59e0b"></span>Recall</div>
+      <div class="metric-value" id="met-recall">—<span class="unit">%</span></div>
+      <div class="metric-delta" id="delta-recall">Loading…</div>
+      <div class="metric-bar"><i id="bar-recall" style="width:0%; background: linear-gradient(90deg,#f59e0b,#fbbf24); box-shadow: 0 0 12px rgba(245,158,11,.45)"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="metric-label"><span class="dot"></span>F1 Score</div>
+      <div class="metric-value" id="met-f1">—</div>
+      <div class="metric-delta" id="delta-f1">Loading…</div>
+      <div class="metric-bar"><i id="bar-f1" style="width:0%"></i></div>
+    </div>
+    <div class="card metric">
+      <div class="metric-label"><span class="dot"></span>AUC-ROC</div>
+      <div class="metric-value" id="met-auc">—</div>
+      <div class="metric-delta" id="delta-auc">Loading…</div>
+      <div class="metric-bar"><i id="bar-auc" style="width:0%"></i></div>
+    </div>
+  </section>
+
+  <!-- analysis row -->
+  <section class="analysis">
+    <!-- transaction input -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 15h4"/></svg>
+          Transaction input
+        </div>
+        <span class="card-sub">step 1 · features</span>
+      </div>
+
+      <form id="tx-form" autocomplete="off">
+        <div class="form-grid">
+          <div class="field">
+            <label>Transaction type</label>
+            <div class="input-wrap">
+              <span class="prefix">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h13"/><path d="m12 3 4 4-4 4"/><path d="M21 17H8"/><path d="m12 13-4 4 4 4"/></svg>
+              </span>
+              <select id="tx-type">
+                <option value="TRANSFER">TRANSFER</option>
+                <option value="PAYMENT">PAYMENT</option>
+                <option value="CASH_OUT">CASH-OUT</option>
+                <option value="CASH_IN">CASH-IN</option>
+                <option value="DEBIT">DEBIT</option>
+              </select>
+              <span class="caret">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Amount <span class="hint">USD</span></label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input id="tx-amount" type="text" placeholder="e.g. 184,250.00" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Origin balance · before</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input id="tx-old-bal-org" type="text" placeholder="e.g. 201,840.55" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Origin balance · after</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input id="tx-new-bal-org" type="text" placeholder="e.g. 0.00" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Dest. balance · before</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input id="tx-old-bal-dest" type="text" placeholder="e.g. 0.00" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Dest. balance · after</label>
+            <div class="input-wrap">
+              <span class="prefix">$</span>
+              <input id="tx-new-bal-dest" type="text" placeholder="e.g. 0.00" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-foot">
+          <button type="submit" class="btn btn-block btn-primary" id="btn-analyze">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            Analyze transaction
+          </button>
+          <button type="button" class="btn btn-block" id="btn-clear">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            Clear
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- result -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          Detection result
+        </div>
+        <span class="card-sub" id="scored-time">awaiting input</span>
+      </div>
+
+      <div class="result">
+        <div class="gauge-wrap">
+          <div class="gauge">
+            <svg width="200" height="200" viewBox="0 0 200 200">
+              <circle class="gauge-track" cx="100" cy="100" r="84"/>
+              <circle id="gauge-arc" class="gauge-arc" cx="100" cy="100" r="84"
+                stroke="#3b82f6"
+                stroke-dasharray="527.79" stroke-dashoffset="527.79"/>
+            </svg>
+            <div class="gauge-center">
+              <div>
+                <div class="gauge-num" id="gauge-num" style="color:#3b82f6; text-shadow:0 0 18px rgba(59,130,246,0.55)">0<span class="pct">%</span></div>
+                <div class="gauge-cap">Fraud probability</div>
+              </div>
+            </div>
+          </div>
+          <div class="legend">
+            <span class="blue"><i></i>Model confidence</span>
+          </div>
+        </div>
+
+        <div class="verdict">
+          <span class="verdict-badge" id="verdict" style="background:rgba(59,130,246,0.08);border-color:rgba(59,130,246,0.25);color:#93c5fd;box-shadow:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:#3b82f6"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+            <span>Submit a transaction to begin analysis</span>
+          </span>
+
+          <span class="recommendation" id="rec-badge">
+            <span class="dot" id="rec-dot"></span>
+            <span id="rec-text">Awaiting transaction data</span>
+          </span>
+
+          <div class="risk-block">
+            <div class="risk-head">Top contributing risk factors</div>
+            <div class="risk-list" id="risk-list">
+              <div class="risk low">
+                <div class="risk-icon"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg></div>
+                <div class="risk-text">No transaction analyzed yet<small>Enter values and click "Analyze transaction"</small></div>
+                <div class="risk-score">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- charts row -->
+  <section class="charts">
+    <!-- feature importance -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="20" x2="21" y2="20"/><rect x="5" y="10" width="3" height="10"/><rect x="10.5" y="6" width="3" height="14"/><rect x="16" y="13" width="3" height="7"/></svg>
+          Feature importance
+        </div>
+        <span class="card-sub">XGBoost · gain</span>
+      </div>
+      <div class="feat-list" id="feat-list">
+        <div class="feat-row"><div class="feat-name" style="color:var(--ink-3)">Loading model features…</div><div class="feat-bar"><i style="width:0%"></i></div><div class="feat-val">—</div></div>
+      </div>
+    </div>
+
+    <!-- transaction log -->
+    <div class="card txn-table">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+          Recent transactions
+        </div>
+        <div class="filters">
+          <span class="chip on" data-filter="all">All</span>
+          <span class="chip" data-filter="fraud">Fraud</span>
+          <span class="chip" data-filter="safe">Safe</span>
+        </div>
+      </div>
+      <div class="txn-scroll">
+        <table class="txn">
+          <thead>
+            <tr>
+              <th style="width:90px">Time</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Origin → Dest</th>
+              <th style="text-align:right">Status</th>
+            </tr>
+          </thead>
+          <tbody id="txn-body">
+            <tr><td colspan="5" style="text-align:center;padding:32px 0;color:var(--ink-3);font-size:12px;">No transactions analyzed yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- bottom row -->
+  <section class="bottom">
+    <div class="card roc-card">
+      <div class="card-head">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14c3-6 7-8 14-8"/></svg>
+          ROC curve
+        </div>
+        <div class="roc-head-extra">
+          <span class="legend"><span class="blue"><i></i>Model</span> <span class="ink"><i></i>Baseline</span></span>
+          <span class="auc-badge">AUC <b id="roc-auc-val">—</b></span>
+        </div>
+      </div>
+      <svg class="roc-svg" viewBox="0 0 600 280" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="rocFill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.45"/>
+            <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+          </linearGradient>
+          <pattern id="rocGrid" width="60" height="46" patternUnits="userSpaceOnUse">
+            <path d="M60 0H0V46" fill="none" stroke="rgba(148,163,184,0.08)" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect x="40" y="14" width="540" height="232" fill="url(#rocGrid)"/>
+        <!-- axes -->
+        <line x1="40" y1="246" x2="580" y2="246" stroke="rgba(148,163,184,0.25)"/>
+        <line x1="40" y1="14"  x2="40"  y2="246" stroke="rgba(148,163,184,0.25)"/>
+        <!-- axis labels -->
+        <g font-family="JetBrains Mono" font-size="9" fill="#6f7d96">
+          <text x="40"  y="262">0.0</text>
+          <text x="175" y="262">0.25</text>
+          <text x="310" y="262">0.5</text>
+          <text x="445" y="262">0.75</text>
+          <text x="568" y="262">1.0</text>
+          <text x="22" y="248" text-anchor="end">0.0</text>
+          <text x="22" y="190" text-anchor="end">0.25</text>
+          <text x="22" y="132" text-anchor="end">0.5</text>
+          <text x="22" y="74"  text-anchor="end">0.75</text>
+          <text x="22" y="20"  text-anchor="end">1.0</text>
+          <text x="310" y="278" text-anchor="middle" fill="#aab6cc">False Positive Rate</text>
+          <text x="14" y="130" text-anchor="middle" fill="#aab6cc" transform="rotate(-90 14 130)">True Positive Rate</text>
+        </g>
+        <!-- baseline -->
+        <line x1="40" y1="246" x2="580" y2="14" stroke="#4a5670" stroke-dasharray="4 5" stroke-width="1.2"/>
+        <!-- ROC fill (dynamic) -->
+        <path id="roc-curve-fill" d="M40,246 L580,14 L580,246 Z" fill="url(#rocFill)"/>
+        <!-- ROC curve (dynamic) -->
+        <path id="roc-curve-path" d="M40,246 L580,14"
+              fill="none" stroke="#3b82f6" stroke-width="2.4"
+              style="filter: drop-shadow(0 0 6px rgba(59,130,246,0.7));"/>
+        <!-- operating point -->
+        <circle id="roc-op-point" cx="120" cy="40" r="5" fill="#3b82f6" stroke="#0d1a30" stroke-width="2" style="display:none"/>
+      </svg>
+    </div>
+
+    <div class="card confusion">
+      <div class="card-head" style="border-bottom:1px solid var(--line-2); margin:-20px -20px 20px; padding: 18px 20px 14px;">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+          Confusion matrix
+        </div>
+        <span class="card-sub">n = <span id="cm-total">—</span></span>
+      </div>
+
+      <div class="cm-grid">
+        <div class="cm-corner"></div>
+        <div class="cm-col-h">Pred · Legit</div>
+        <div class="cm-col-h">Pred · Fraud</div>
+
+        <div class="cm-row-h">Actual · Legit</div>
+        <div class="cm-cell tn">
+          <div>
+            <div class="cm-tag">TN</div>
+            <div class="cm-name">True Negative</div>
+          </div>
+          <div>
+            <div class="cm-num" id="cm-tn-val">—</div>
+            <div class="cm-pct" id="cm-tn-pct">correctly approved</div>
+          </div>
+        </div>
+        <div class="cm-cell fp">
+          <div>
+            <div class="cm-tag">FP</div>
+            <div class="cm-name">False Positive</div>
+          </div>
+          <div>
+            <div class="cm-num" id="cm-fp-val">—</div>
+            <div class="cm-pct" id="cm-fp-pct">false alarm</div>
+          </div>
+        </div>
+
+        <div class="cm-row-h">Actual · Fraud</div>
+        <div class="cm-cell fn">
+          <div>
+            <div class="cm-tag">FN</div>
+            <div class="cm-name">False Negative</div>
+          </div>
+          <div>
+            <div class="cm-num" id="cm-fn-val">—</div>
+            <div class="cm-pct" id="cm-fn-pct">missed fraud</div>
+          </div>
+        </div>
+        <div class="cm-cell tp">
+          <div>
+            <div class="cm-tag">TP</div>
+            <div class="cm-name">True Positive</div>
+          </div>
+          <div>
+            <div class="cm-num" id="cm-tp-val">—</div>
+            <div class="cm-pct" id="cm-tp-pct">caught fraud</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="model-info">
+        <div class="mi-row"><span class="k">Algorithm</span><span class="v" id="mi-algo">XGBoost</span></div>
+        <div class="mi-row"><span class="k">Trees</span><span class="v">200</span></div>
+        <div class="mi-row"><span class="k">Max depth</span><span class="v">6</span></div>
+        <div class="mi-row"><span class="k">Learning rate</span><span class="v">0.10</span></div>
+        <div class="mi-row"><span class="k">Train rows</span><span class="v" id="mi-train-rows">—</span></div>
+        <div class="mi-row"><span class="k">Dataset fraud rate</span><span class="v" id="mi-fraud-rate">—</span></div>
+        <div class="mi-row"><span class="k">Data source</span><span class="v" id="mi-data-source">—</span></div>
+        <div class="mi-row"><span class="k">Imbalance strategy</span><span class="v">scale_pos_weight</span></div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footnote">
+    <span>FraudGuard AI · Portfolio Project — Nathanael Johnson</span>
+    <span>XGBoost · FastAPI · Kaggle PaySim dataset</span>
+  </footer>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
