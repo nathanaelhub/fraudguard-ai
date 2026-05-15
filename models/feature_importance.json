@@ -1,0 +1,54 @@
+[
+  {
+    "feature": "isZeroNewBalanceOrg",
+    "importance": 0.4428767263889313
+  },
+  {
+    "feature": "newbalanceOrig",
+    "importance": 0.3640877604484558
+  },
+  {
+    "feature": "balanceDeltaDest",
+    "importance": 0.15072572231292725
+  },
+  {
+    "feature": "typeEncoded",
+    "importance": 0.01547788642346859
+  },
+  {
+    "feature": "errorBalanceOrg",
+    "importance": 0.009979472495615482
+  },
+  {
+    "feature": "errorBalanceDest",
+    "importance": 0.0061424849554896355
+  },
+  {
+    "feature": "amount",
+    "importance": 0.0022505400702357292
+  },
+  {
+    "feature": "oldbalanceOrg",
+    "importance": 0.002166618127375841
+  },
+  {
+    "feature": "newbalanceDest",
+    "importance": 0.0021446419414132833
+  },
+  {
+    "feature": "balanceDeltaOrg",
+    "importance": 0.0021419194526970387
+  },
+  {
+    "feature": "oldbalanceDest",
+    "importance": 0.0020062618423253298
+  },
+  {
+    "feature": "isZeroBalanceOrg",
+    "importance": 0.0
+  },
+  {
+    "feature": "isZeroBalanceDest",
+    "importance": 0.0
+  }
+]

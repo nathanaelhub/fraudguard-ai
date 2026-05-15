@@ -359,19 +359,38 @@ function setSimulateLoading(on) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
+async function waitForModel(maxWaitMs = 150_000) {
+  const POLL_MS = 5000;
+  const start = Date.now();
+  while (true) {
+    try {
+      const [metrics, fi] = await Promise.all([
+        apiGet('/api/metrics'),
+        apiGet('/api/feature-importance'),
+      ]);
+      renderMetrics(metrics);
+      renderFeatImportance(fi);
+      setStatus('', `${metrics.model_type} — online`);
+      return;
+    } catch (_) {
+      const elapsed = Math.round((Date.now() - start) / 1000);
+      if (elapsed * 1000 >= maxWaitMs) {
+        setStatus('error', 'Model unavailable — try refreshing');
+        return;
+      }
+      setStatus('loading', elapsed < 10
+        ? 'Loading model…'
+        : `Training model on first boot — ${elapsed}s elapsed`);
+      await new Promise(r => setTimeout(r, POLL_MS));
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // Load model data
+  // Load model data (retries every 5 s while the server trains on cold start)
   setStatus('loading', 'Loading model…');
-  try {
-    const [metrics, fi] = await Promise.all([apiGet('/api/metrics'), apiGet('/api/feature-importance')]);
-    renderMetrics(metrics);
-    renderFeatImportance(fi);
-    setStatus('', `${metrics.model_type} — online`);
-  } catch (e) {
-    console.error(e);
-    setStatus('error', 'Model unavailable');
-  }
+  await waitForModel();
 
   // Analyze form submit
   $('tx-form').addEventListener('submit', async e => {

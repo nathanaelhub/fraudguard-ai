@@ -9,7 +9,5 @@ env/
 dist/
 build/
 .DS_Store
-models/*.pkl
-models/*.json
 data/*.csv
 data/*.zip
