@@ -142,6 +142,14 @@ async def predict(transaction: Transaction):
     return _run_predict(transaction)
 
 
+@app.get("/api/health")
+async def health():
+    """503 until the model is loaded, so Render only routes traffic when we can serve."""
+    if _model is None:
+        raise HTTPException(status_code=503, detail="Model not ready")
+    return {"status": "ok"}
+
+
 @app.get("/api/metrics")
 async def get_metrics():
     if not _metrics:
