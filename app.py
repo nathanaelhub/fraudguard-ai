@@ -11,6 +11,7 @@ Run:
 import os
 import json
 import random
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Optional
 
@@ -34,7 +35,17 @@ FEATURE_COLS = [
     "isZeroBalanceOrg", "isZeroNewBalanceOrg", "isZeroBalanceDest",
 ]
 
-app = FastAPI(title="FraudGuard AI", version="1.0.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if not os.path.exists("models/fraud_model.pkl"):
+        print("No model found — training on synthetic data (this may take ~60s)...")
+        from train import train_model
+        train_model(demo=True)
+    _load_artifacts()
+    yield
+
+
+app = FastAPI(title="FraudGuard AI", version="1.0.0", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Runtime state
@@ -52,15 +63,6 @@ def _load_artifacts():
     with open("models/feature_importance.json") as f:
         _feature_importance = json.load(f)
     print("Model artifacts loaded.")
-
-
-@app.on_event("startup")
-async def startup():
-    if not os.path.exists("models/fraud_model.pkl"):
-        print("No model found — training on synthetic data (this may take ~60s)...")
-        from train import train_model
-        train_model(demo=True)
-    _load_artifacts()
 
 
 # ── Pydantic models ───────────────────────────────────────────────────────────
