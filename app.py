@@ -118,11 +118,9 @@ def _run_predict(t: Transaction) -> dict:
     X = _build_feature_row(t)
     probability = float(_model.predict_proba(X)[0][1])
     is_fraud = bool(_model.predict(X)[0])
-    confidence = (
-        "High" if probability > 0.75 or probability < 0.25
-        else "Medium" if probability > 0.5 or probability < 0.5
-        else "Low"
-    )
+    # confidence = how far the model is from the 0.5 decision boundary
+    distance = abs(probability - 0.5)
+    confidence = "High" if distance > 0.25 else "Medium" if distance > 0.1 else "Low"
     result = {
         "isFraud": is_fraud,
         "probability": round(probability, 4),
